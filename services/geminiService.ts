@@ -2,22 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Hotel } from "../types";
 
-/**
- * Utility to safely initialize the AI client.
- * This handles potential environment mismatches in Vercel/Browser environments.
- */
-const getAIClient = () => {
-  // Use a fallback check for process.env to prevent ReferenceErrors in some environments
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-  
-  if (!apiKey) {
-    console.error("ENVIRONMENT FAULT: process.env.API_KEY is undefined. Please add 'API_KEY' to your Vercel Project Settings -> Environment Variables.");
-    throw new Error("API_KEY node not found in system environment. Connection to TravelCrew Hub failed.");
-  }
-  
-  return new GoogleGenAI({ apiKey });
-};
-
 const HOTEL_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -77,8 +61,20 @@ const HOTEL_SCHEMA = {
   required: ["hotels"]
 };
 
+/**
+ * Checks for the existence of the API_KEY and initializes the AI client.
+ * Strictly follows the required process.env.API_KEY pattern.
+ */
+function initAI() {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY node not found in system environment. Connection to TravelCrew Hub failed.");
+  }
+  return new GoogleGenAI({ apiKey });
+}
+
 export async function searchHotels(userInput: string) {
-  const ai = getAIClient();
+  const ai = initAI();
   const prompt = `
     OPERATIONAL COMMAND: Deploy TravelCrew AI Agents to research and extract booking data for: "${userInput}".
 
@@ -122,7 +118,7 @@ export async function searchHotels(userInput: string) {
 }
 
 export async function chatWithCrew(userInput: string, context: Hotel[]) {
-  const ai = getAIClient();
+  const ai = initAI();
   const prompt = `
     You are the TravelCrew AI Hub. 
     Research results: ${JSON.stringify(context)}
