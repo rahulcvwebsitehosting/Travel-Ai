@@ -172,10 +172,6 @@
   }
 }
 </script>
-<script>
-    // Critical polyfill to prevent "process is not defined" errors during module load
-    window.process = { env: { NODE_ENV: 'production' } };
-</script>
 </head>
 <body>
     <div class="bg-city-overlay"></div>
