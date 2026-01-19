@@ -80,7 +80,12 @@ const App: React.FC = () => {
         });
       }, 2000);
 
-      const response = await searchHotels(activeQuery);
+      // Add a race against a timeout to prevent hanging UI
+      const response = await Promise.race([
+        searchHotels(activeQuery),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Mission Timeout: Deployment taking longer than expected.")), 60000))
+      ]) as any;
+      
       clearInterval(stepTimer);
 
       setAgentLogs(prev => prev.map(l => ({ ...l, status: 'completed' })));
@@ -182,39 +187,56 @@ const App: React.FC = () => {
             </div>
 
             {error && (
-              <div className="w-full max-w-2xl bg-white/5 border border-zinc-700 p-6 rounded-2xl text-white animate-in shake duration-500">
-                <p className="font-bold flex items-center justify-center gap-2 uppercase tracking-widest text-xs">
-                  ⚠️ System Fault: <span className="text-zinc-400">{error}</span>
-                </p>
-                <button onClick={() => setError(null)} className="mt-2 text-[10px] font-black uppercase tracking-widest underline opacity-60 hover:opacity-100 transition-opacity">Reset Node</button>
+              <div className="w-full max-w-2xl bg-white/5 border border-zinc-700 p-8 rounded-2xl text-white animate-in shake duration-500 shadow-2xl">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-black uppercase tracking-[0.2em] text-xs text-red-400">System Initialization Fault</p>
+                    <p className="text-zinc-400 text-sm font-medium leading-relaxed">
+                      {error}
+                      {error.includes("API_KEY") && (
+                        <span className="block mt-4 p-4 glass rounded-lg text-left text-xs text-zinc-300 font-mono">
+                          Instruction: Login to your Vercel Dashboard, navigate to Project Settings -> Environment Variables, and add a key named 'API_KEY' with your Google Gemini token.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded hover:bg-zinc-200 transition-colors">Reboot Application</button>
+                </div>
               </div>
             )}
 
-            <div className="w-full max-w-4xl glass p-4 rounded-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-white/10 animate-in zoom-in-95 duration-700 delay-300 relative group">
-              <div className="absolute inset-0 bg-white/5 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-              <div className="flex flex-col md:flex-row gap-3 relative z-10">
-                <input 
-                  type="text" 
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder='Specify Mission Intent... e.g. "Mumbai, Bandra, Business, ₹5k"'
-                  className="flex-1 bg-black/40 px-10 py-6 rounded-xl text-xl text-white outline-none focus:ring-1 focus:ring-white/30 transition-all placeholder:text-zinc-500 border border-white/10"
-                />
-                <AgenticButton 
-                  onClick={() => handleSearch()}
-                  disabled={isLoading}
-                  className="px-12 py-6 text-sm"
-                >
-                  <span>{isLoading ? 'Processing...' : 'Deploy Crew'}</span>
-                  {!isLoading && (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  )}
-                </AgenticButton>
+            {!error && (
+              <div className="w-full max-w-4xl glass p-4 rounded-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-white/10 animate-in zoom-in-95 duration-700 delay-300 relative group">
+                <div className="absolute inset-0 bg-white/5 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="flex flex-col md:flex-row gap-3 relative z-10">
+                  <input 
+                    type="text" 
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder='Specify Mission Intent... e.g. "Mumbai, Bandra, Business, ₹5k"'
+                    className="flex-1 bg-black/40 px-10 py-6 rounded-xl text-xl text-white outline-none focus:ring-1 focus:ring-white/30 transition-all placeholder:text-zinc-500 border border-white/10"
+                  />
+                  <AgenticButton 
+                    onClick={() => handleSearch()}
+                    disabled={isLoading}
+                    className="px-12 py-6 text-sm"
+                  >
+                    <span>{isLoading ? 'Processing...' : 'Deploy Crew'}</span>
+                    {!isLoading && (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    )}
+                  </AgenticButton>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 text-left animate-in fade-in duration-1000 delay-500">
               <h3 className="col-span-full text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-2">⚡ Quick Deployments</h3>
@@ -223,7 +245,7 @@ const App: React.FC = () => {
                   key={idx}
                   whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
                   onClick={() => handleSearch(item.query)}
-                  disabled={isLoading}
+                  disabled={isLoading || !!error}
                   className="p-6 glass rounded-2xl border-white/10 transition-all group flex items-center justify-between disabled:opacity-50"
                 >
                   <div className="flex flex-col gap-1">
