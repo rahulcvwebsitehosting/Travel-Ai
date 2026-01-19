@@ -2,7 +2,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Hotel } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safety check for process.env to prevent crash on initialization
+const getApiKey = () => {
+  try {
+    return (process as any).env.API_KEY || '';
+  } catch {
+    return '';
+  }
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 const HOTEL_SCHEMA = {
   type: Type.OBJECT,
@@ -64,6 +73,9 @@ const HOTEL_SCHEMA = {
 };
 
 export async function searchHotels(userInput: string) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API_KEY node not found in system environment.");
+
   const prompt = `
     OPERATIONAL COMMAND: Deploy TravelCrew AI Agents to research and extract booking data for: "${userInput}".
 
