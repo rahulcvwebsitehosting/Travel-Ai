@@ -33,6 +33,7 @@ export interface BookingRecord {
   totalPrice: number;
   status: 'confirmed' | 'completed' | 'cancelled';
   image: string;
+  agentHash?: string;
 }
 
 export interface UserAccount {
@@ -42,6 +43,12 @@ export interface UserAccount {
   avatar?: string;
   memberSince: string;
   loyaltyTier: string;
+  preferences: string[];
+  stats: {
+    missionsCompleted: number;
+    savingsGenerated: number;
+    citiesExplored: number;
+  };
 }
 
 export interface GroundingSource {

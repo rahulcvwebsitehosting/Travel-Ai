@@ -24,24 +24,31 @@ export const TRENDING_SEARCHES = [
   { label: 'Honeymoon in Maldives', budget: '₹15k-25k', query: 'Romantic honeymoon resort in Maldives with private beach and all inclusive meals' }
 ];
 
-export const INDIAN_PREFERENCES = {
-  commonRequirements: [
-    'Vegetarian food options',
-    'Jain food available',
-    'Family rooms (3-4 people)',
-    'Close to railway station/airport',
-    'Free WiFi (mandatory)',
-    'Parking available',
-    'Early check-in flexibility'
-  ]
-};
+export const INDIAN_PREFERENCES = [
+  'Vegetarian food options',
+  'Jain food available',
+  'Family rooms (3-4 people)',
+  'Close to railway station',
+  'Close to airport',
+  'Free WiFi',
+  'Parking available',
+  'Early check-in flexibility',
+  'Gym facilities',
+  'Swimming pool'
+];
 
 export const MOCK_USER: UserAccount = {
   name: 'Arjun Mehta',
-  email: 'arjun.mehta@midnight-travel.in',
+  email: 'arjun.mehta@travelcrew.ai',
   phone: '+91 98765 43210',
   memberSince: 'March 2024',
-  loyaltyTier: 'Titanium Voyager'
+  loyaltyTier: 'Titanium Voyager',
+  preferences: ['Vegetarian food options', 'Free WiFi', 'Family rooms (3-4 people)'],
+  stats: {
+    missionsCompleted: 14,
+    savingsGenerated: 12450,
+    citiesExplored: 6
+  }
 };
 
 export const MOCK_BOOKINGS: BookingRecord[] = [
@@ -53,7 +60,8 @@ export const MOCK_BOOKINGS: BookingRecord[] = [
     checkOut: 'Jan 15, 2025',
     totalPrice: 42500,
     status: 'completed',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop',
+    agentHash: '0x88...f2a1'
   },
   {
     id: 'TX-8842',
@@ -63,7 +71,8 @@ export const MOCK_BOOKINGS: BookingRecord[] = [
     checkOut: 'Feb 07, 2025',
     totalPrice: 12400,
     status: 'completed',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400&auto=format&fit=crop',
+    agentHash: '0x42...d9e4'
   },
   {
     id: 'TX-1029',
@@ -73,7 +82,8 @@ export const MOCK_BOOKINGS: BookingRecord[] = [
     checkOut: 'Dec 25, 2025',
     totalPrice: 58000,
     status: 'confirmed',
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400&auto=format&fit=crop',
+    agentHash: '0x11...b3c8'
   }
 ];
 

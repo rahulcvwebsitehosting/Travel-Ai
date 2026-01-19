@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { AppState } from '../types';
 import AgenticButton from './AgenticButton';
+import AgentIcon from './AgentIcon';
 
 interface InfoViewProps {
   type: AppState;
@@ -92,12 +93,19 @@ const InfoView: React.FC<InfoViewProps> = ({ type, onNavigate }) => {
 
   return (
     <div className="max-w-4xl mx-auto py-12 space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="space-y-4">
-        <div className="inline-flex px-3 py-1 glass rounded text-[9px] font-black uppercase tracking-widest text-zinc-400 border-white/5">
-          {content.subtitle}
+      <div className="flex flex-col md:flex-row gap-10 items-start">
+        <div className="shrink-0 p-6 glass rounded-3xl border-white/10 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
+          <AgentIcon type={content.title} className="w-20 h-20 text-white relative z-10" />
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">{content.title}</h1>
-        <p className="text-xl text-zinc-400 font-medium leading-relaxed max-w-2xl">{content.description}</p>
+        
+        <div className="space-y-4">
+          <div className="inline-flex px-3 py-1 glass rounded text-[9px] font-black uppercase tracking-widest text-zinc-400 border-white/5">
+            {content.subtitle}
+          </div>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">{content.title}</h1>
+          <p className="text-xl text-zinc-400 font-medium leading-relaxed max-w-2xl">{content.description}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">

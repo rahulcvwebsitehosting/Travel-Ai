@@ -8,6 +8,7 @@ import HotelCard from './components/HotelCard';
 import ProfileView from './components/ProfileView';
 import InfoView from './components/InfoView';
 import AgenticButton from './components/AgenticButton';
+import FloatingChat from './components/FloatingChat';
 import { AppState, Hotel, AgentLog, ChatMessage, GroundingSource } from './types';
 import { TRENDING_SEARCHES } from './constants';
 import { searchHotels, chatWithCrew } from './services/geminiService';
@@ -379,6 +380,7 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
       <Footer onNavigate={onNavigate} />
+      <FloatingChat currentResults={results} />
     </div>
   );
 };

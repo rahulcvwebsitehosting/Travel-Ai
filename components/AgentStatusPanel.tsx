@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { AgentLog } from '../types';
+import AgentIcon from './AgentIcon';
 
 interface AgentStatusPanelProps {
   logs: AgentLog[];
@@ -33,24 +34,24 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({ logs = [] }) => {
             log?.status === 'working' ? 'bg-white/10 border-white/20' : 'bg-transparent border-white/5 opacity-15'
           }`}>
             <div className="flex flex-col items-center text-center gap-3">
-              <div className={`h-9 w-9 rounded flex items-center justify-center transition-all shadow-lg ${
+              <div className={`h-12 w-12 rounded-lg flex items-center justify-center transition-all shadow-lg ${
                 log?.status === 'completed' ? 'bg-white text-black' : 
-                log?.status === 'working' ? 'bg-zinc-300 text-black animate-pulse' : 'bg-white/5 text-zinc-700'
+                log?.status === 'working' ? 'bg-zinc-300 text-black agent-pulse' : 'bg-white/5 text-zinc-700'
               }`}>
                 {log?.status === 'completed' ? (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 ) : (
-                  <div className="font-black text-xs">{idx + 1}</div>
+                  <AgentIcon type={log?.agent} className="w-6 h-6" />
                 )}
               </div>
               <div className="space-y-1">
-                <p className={`text-[11px] font-black uppercase tracking-wider ${log?.status === 'working' ? 'text-white' : 'text-zinc-300'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wider ${log?.status === 'working' ? 'text-white' : 'text-zinc-300'}`}>
                   {log?.agent ? log.agent.split(' ')[0] : 'Agent'}
                 </p>
-                <p className={`text-[9px] font-bold uppercase tracking-widest ${log?.status === 'completed' ? 'text-zinc-400' : log?.status === 'working' ? 'text-white' : 'text-zinc-600'}`}>
-                  {log?.status === 'completed' ? 'SYNCED' : log?.status === 'working' ? 'READING...' : 'IDLE'}
+                <p className={`text-[8px] font-bold uppercase tracking-widest ${log?.status === 'completed' ? 'text-zinc-400' : log?.status === 'working' ? 'text-white' : 'text-zinc-600'}`}>
+                  {log?.status === 'completed' ? 'SYNCED' : log?.status === 'working' ? 'ACTIVE' : 'IDLE'}
                 </p>
               </div>
             </div>
