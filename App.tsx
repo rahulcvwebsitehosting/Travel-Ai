@@ -35,6 +35,17 @@ const App: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
 
+  // Pre-flight check for API_KEY
+  useEffect(() => {
+    const checkEnv = () => {
+      const key = process.env.API_KEY || (process.env as any).NEXT_PUBLIC_API_KEY;
+      if (!key) {
+        setError("SYSTEM_MAINTENANCE: API node connection failed. Environmental variable 'API_KEY' is not detected. Please verify Vercel Dashboard settings.");
+      }
+    };
+    checkEnv();
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -83,7 +94,7 @@ const App: React.FC = () => {
       // Add a race against a timeout to prevent hanging UI
       const response = await Promise.race([
         searchHotels(activeQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Mission Timeout: Deployment taking longer than expected.")), 60000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Mission Timeout: The AI crew is taking longer than expected. Please check your network or API quota.")), 45000))
       ]) as any;
       
       clearInterval(stepTimer);
@@ -104,9 +115,9 @@ const App: React.FC = () => {
       }]);
 
       setAppState(AppState.RESULTS);
-    } catch (error: any) {
-      console.error("handleSearch Error:", error);
-      setError(error.message || "A deployment error occurred. Please try again.");
+    } catch (err: any) {
+      console.error("handleSearch Error:", err);
+      setError(err.message || "A deployment error occurred. The AI agents could not synchronize.");
       setAppState(AppState.LANDING);
     } finally {
       setIsLoading(false);
@@ -133,8 +144,8 @@ const App: React.FC = () => {
         content: response || "The crew is verifying details...",
         timestamp: new Date().toLocaleTimeString()
       }]);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -168,6 +179,29 @@ const App: React.FC = () => {
       return <InfoView type={appState} onNavigate={onNavigate} />;
     }
 
+    if (error && error.includes("SYSTEM_MAINTENANCE")) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-700">
+          <div className="h-20 w-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mb-4 border border-red-500/20">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-10 h-10">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Mission Control Offline</h1>
+          <div className="max-w-xl glass p-8 rounded-2xl border-white/10 text-zinc-400 space-y-4">
+            <p className="font-medium text-lg leading-relaxed">{error}</p>
+            <div className="pt-4 border-t border-white/5">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">DevOps Instruction</p>
+              <div className="text-[10px] font-mono bg-black/40 p-4 rounded text-left">
+                Ensure "API_KEY" or "NEXT_PUBLIC_API_KEY" is added to your Vercel project environment variables. If you just added it, trigger a fresh deployment.
+              </div>
+            </div>
+          </div>
+          <button onClick={() => window.location.reload()} className="px-8 py-4 bg-white text-black text-xs font-black uppercase tracking-widest rounded hover:bg-zinc-200 transition-all">Reboot Hub</button>
+        </div>
+      );
+    }
+
     switch (appState) {
       case AppState.LANDING:
         return (
@@ -186,57 +220,42 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            {error && (
-              <div className="w-full max-w-2xl bg-white/5 border border-zinc-700 p-8 rounded-2xl text-white animate-in shake duration-500 shadow-2xl">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-black uppercase tracking-[0.2em] text-xs text-red-400">System Initialization Fault</p>
-                    <div className="text-zinc-400 text-sm font-medium leading-relaxed">
-                      {error}
-                      {error.includes("API_KEY") && (
-                        <span className="block mt-4 p-4 glass rounded-lg text-left text-xs text-zinc-300 font-mono">
-                          Instruction: Login to your Vercel Dashboard, navigate to Project Settings &rarr; Environment Variables, and add a key named 'API_KEY' with your Google Gemini token.
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded hover:bg-zinc-200 transition-colors">Reboot Application</button>
-                </div>
+            {error && !error.includes("MAINTENANCE") && (
+              <div className="w-full max-w-2xl bg-red-500/5 border border-red-500/20 p-6 rounded-2xl text-red-400 animate-in shake duration-500 flex items-center justify-between gap-4">
+                <p className="text-xs font-black uppercase tracking-widest text-left">{error}</p>
+                <button onClick={() => setError(null)} className="shrink-0 hover:text-white transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             )}
 
-            {!error && (
-              <div className="w-full max-w-4xl glass p-4 rounded-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-white/10 animate-in zoom-in-95 duration-700 delay-300 relative group">
-                <div className="absolute inset-0 bg-white/5 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <div className="flex flex-col md:flex-row gap-3 relative z-10">
-                  <input 
-                    type="text" 
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    placeholder='Specify Mission Intent... e.g. "Mumbai, Bandra, Business, ₹5k"'
-                    className="flex-1 bg-black/40 px-10 py-6 rounded-xl text-xl text-white outline-none focus:ring-1 focus:ring-white/30 transition-all placeholder:text-zinc-500 border border-white/10"
-                  />
-                  <AgenticButton 
-                    onClick={() => handleSearch()}
-                    disabled={isLoading}
-                    className="px-12 py-6 text-sm"
-                  >
-                    <span>{isLoading ? 'Processing...' : 'Deploy Crew'}</span>
-                    {!isLoading && (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                      </svg>
-                    )}
-                  </AgenticButton>
-                </div>
+            <div className="w-full max-w-4xl glass p-4 rounded-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-white/10 animate-in zoom-in-95 duration-700 delay-300 relative group">
+              <div className="absolute inset-0 bg-white/5 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+              <div className="flex flex-col md:flex-row gap-3 relative z-10">
+                <input 
+                  type="text" 
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder='Specify Mission Intent... e.g. "Mumbai, Bandra, Business, ₹5k"'
+                  className="flex-1 bg-black/40 px-10 py-6 rounded-xl text-xl text-white outline-none focus:ring-1 focus:ring-white/30 transition-all placeholder:text-zinc-500 border border-white/10"
+                />
+                <AgenticButton 
+                  onClick={() => handleSearch()}
+                  disabled={isLoading}
+                  className="px-12 py-6 text-sm"
+                >
+                  <span>{isLoading ? 'Processing...' : 'Deploy Crew'}</span>
+                  {!isLoading && (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  )}
+                </AgenticButton>
               </div>
-            )}
+            </div>
 
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 text-left animate-in fade-in duration-1000 delay-500">
               <h3 className="col-span-full text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-2">⚡ Quick Deployments</h3>
@@ -245,8 +264,8 @@ const App: React.FC = () => {
                   key={idx}
                   whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
                   onClick={() => handleSearch(item.query)}
-                  disabled={isLoading || !!error}
-                  className="p-6 glass rounded-2xl border-white/10 transition-all group flex items-center justify-between disabled:opacity-50"
+                  disabled={isLoading}
+                  className="p-6 glass rounded-2xl border-white/10 transition-all group flex items-center justify-between"
                 >
                   <div className="flex flex-col gap-1">
                     <span className="font-bold text-zinc-300 group-hover:text-white transition-colors">{item.label}</span>
