@@ -55,13 +55,6 @@ const App: React.FC = () => {
     const activeQuery = customQuery || query;
     if (!activeQuery.trim()) return;
 
-    // Direct dynamic key lookup to avoid bundler static replacement
-    const key = (window as any).process?.env?.API_KEY;
-    if (!key || key === 'undefined') {
-      setError("MISSION_FAILURE: API_KEY synchronization failed. Please ensure the 'API_KEY' environment variable is set in Vercel and you have performed a 'Redeploy'.");
-      return;
-    }
-
     setError(null);
     setAppState(AppState.SEARCHING);
     setIsLoading(true);
@@ -87,10 +80,7 @@ const App: React.FC = () => {
         });
       }, 2000);
 
-      const response = await Promise.race([
-        searchHotels(activeQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("MISSION_TIMEOUT: High latency in Agent Network.")), 45000))
-      ]) as any;
+      const response = await searchHotels(activeQuery);
       
       clearInterval(stepTimer);
       setAgentLogs(prev => prev.map(l => ({ ...l, status: 'completed' })));
@@ -276,7 +266,7 @@ const App: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8">
               <div className="space-y-1">
                 <motion.button 
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                   onClick={() => onNavigate(AppState.LANDING)} 
                   className="flex items-center gap-2 text-zinc-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all mb-2 px-6 py-2 bg-white/5 border border-white/10 rounded-lg"
                 >

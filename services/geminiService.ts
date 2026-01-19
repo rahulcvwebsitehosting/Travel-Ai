@@ -13,7 +13,7 @@ const HOTEL_SCHEMA = {
           id: { type: Type.STRING },
           name: { type: Type.STRING },
           rating: { type: Type.NUMBER },
-          location: { type: Type.STRING, description: "Detailed neighborhood and city." },
+          location: { type: Type.STRING },
           pricePerNight: { type: Type.NUMBER },
           totalPrice: { type: Type.NUMBER },
           image: { type: Type.STRING },
@@ -56,15 +56,23 @@ const HOTEL_SCHEMA = {
 };
 
 /**
- * Robust AI Initialization
- * Accesses API_KEY dynamically from the process shim to ensure runtime availability.
+ * Intelligent AI Initialization
+ * Prioritizes the custom global TRAVEL_CREW_IDENTITY object to avoid bundler replacement.
  */
 function getAIInstance() {
-  // Use bracket notation to prevent bundler static analysis/replacement
-  const apiKey = (window as any).process?.env?.API_KEY || (process.env as any)?.API_KEY;
+  const identity = (window as any).TRAVEL_CREW_IDENTITY;
+  const processEnv = (window as any).process?.env;
+  
+  // Clean the key (remove any placeholders or "undefined" strings)
+  const clean = (val: any) => (val && val !== 'undefined' && val !== '%%API_KEY%%') ? val : null;
 
-  if (!apiKey || apiKey === 'undefined') {
-    throw new Error("MISSION_NODE_UNAVAILABLE");
+  const apiKey = clean(identity?.apiKey) || 
+                 clean(processEnv?.API_KEY) || 
+                 clean(processEnv?.VITE_API_KEY) || 
+                 clean(processEnv?.NEXT_PUBLIC_API_KEY);
+
+  if (!apiKey) {
+    throw new Error("IDENTITY_SYNC_FAILED");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -103,8 +111,8 @@ export async function searchHotels(userInput: string) {
     return { ...json, sources };
   } catch (error: any) {
     console.error("AI Service Error:", error);
-    if (error.message === "MISSION_NODE_UNAVAILABLE") {
-      throw new Error("MAINTENANCE_REQUIRED: Environmental synchronization failed. Ensure API_KEY is set in Vercel.");
+    if (error.message === "IDENTITY_SYNC_FAILED") {
+      throw new Error("MAINTENANCE_REQUIRED: The API_KEY could not be synchronized with the client. Ensure the key is set in Vercel and you have performed a 'Redeploy' with cache disabled.");
     }
     throw error;
   }
