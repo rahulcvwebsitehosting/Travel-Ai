@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelCrew AI | Your Personal AI Travel Assistants</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --accent-primary: #d4d4d8;
+            --accent-secondary: #fafafa;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: #ffffff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        .bg-city-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.ibb.co/9H8BMVxk/unwatermarked-Gemini-Generated-Image-hzqpgqhzqpgqhzqp.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.18; /* Slightly increased for better visibility of the custom art */
+            z-index: -2;
+            filter: grayscale(100%) brightness(0.5) contrast(1.2);
+            pointer-events: none;
+        }
+        .bg-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .glass {
+            background: rgba(10, 10, 10, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-glow {
+            background: linear-gradient(135deg, #18181b 0%, #f4f4f5 100%);
+        }
+        .agent-pulse {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.08); }
+            50% { box-shadow: 0 0 25px rgba(255, 255, 255, 0.15); }
+        }
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.2;
+            animation: twinkle var(--duration) infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.1); }
+        }
+        
+        .agentic-btn {
+          position: relative;
+          background: transparent;
+          color: #fff;
+          font-size: 13px;
+          text-transform: uppercase;
+          font-weight: 800;
+          border: none;
+          padding: 14px 28px;
+          cursor: pointer;
+          perspective: 30rem;
+          border-radius: 8px;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          overflow: hidden;
+          transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          letter-spacing: 0.1em;
+        }
+
+        .agentic-btn > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        .agentic-btn::before {
+          content: "";
+          display: block;
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+          border-radius: 8px;
+          background: linear-gradient(
+            320deg,
+            #09090b 0%,
+            #27272a 45%,
+            #52525b 50%,
+            #27272a 55%,
+            #09090b 100%
+          );
+          background-size: 200% 200%;
+          z-index: 1;
+          transition: background 3s;
+        }
+
+        .agentic-btn:hover::before {
+          animation: agentic-rotate 0.8s forwards;
+          background: linear-gradient(
+            320deg,
+            #18181b 0%,
+            #e4e4e7 50%,
+            #18181b 100%
+          );
+        }
+
+        @keyframes agentic-rotate {
+          0% { transform: rotateY(180deg); }
+          100% { transform: rotateY(360deg); }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "framer-motion": "https://esm.sh/framer-motion@^11.11.11"
+  }
+}
+</script>
+</head>
+<body>
+    <div class="bg-city-overlay"></div>
+    <div class="bg-vignette"></div>
+    <div class="particles" id="particles"></div>
+    <div id="root"></div>
+    <script>
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 40; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 1.5 + 0.5;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (3 + Math.random() * 5) + 's');
+            container.appendChild(star);
+        }
+    </script>
+</body>
+</html>

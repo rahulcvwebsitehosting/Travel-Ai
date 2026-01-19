@@ -1,0 +1,7 @@
+{
+  "name": "TravelCrew AI",
+  "description": "An AI-powered hotel booking platform for India featuring a multi-agent crew that researches, compares, and finds your perfect stay through natural language.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
