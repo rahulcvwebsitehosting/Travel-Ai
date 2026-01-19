@@ -62,14 +62,14 @@ const HOTEL_SCHEMA = {
 };
 
 /**
- * Validates environment and initializes the Google GenAI client.
- * Strictly uses process.env.API_KEY as per core requirements.
+ * Initializes the AI SDK.
+ * Exclusively uses process.env.API_KEY as the intelligence source.
  */
-function getAI() {
-  const apiKey = process.env.API_KEY;
+function getAIInstance() {
+  const apiKey = (process.env as any)?.API_KEY;
 
   if (!apiKey) {
-    throw new Error("MAINTENANCE_REQUIRED: Environment variable 'API_KEY' is missing. Please add it to your Vercel Project Settings.");
+    throw new Error("API_KEY_NODE_UNAVAILABLE");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -77,7 +77,7 @@ function getAI() {
 
 export async function searchHotels(userInput: string) {
   try {
-    const ai = getAI();
+    const ai = getAIInstance();
     const prompt = `
       OPERATIONAL COMMAND: Deploy TravelCrew AI Agents to research and extract booking data for: "${userInput}".
 
@@ -115,13 +115,16 @@ export async function searchHotels(userInput: string) {
     return { ...json, sources };
   } catch (error: any) {
     console.error("AI Service Error:", error);
+    if (error.message === "API_KEY_NODE_UNAVAILABLE") {
+      throw new Error("MAINTENANCE_REQUIRED: Environment variable 'API_KEY' is missing from the build stack.");
+    }
     throw error;
   }
 }
 
 export async function chatWithCrew(userInput: string, context: Hotel[]) {
   try {
-    const ai = getAI();
+    const ai = getAIInstance();
     const prompt = `
       You are the TravelCrew AI Hub. 
       Research results: ${JSON.stringify(context)}
