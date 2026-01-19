@@ -196,14 +196,14 @@ const App: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <p className="font-black uppercase tracking-[0.2em] text-xs text-red-400">System Initialization Fault</p>
-                    <p className="text-zinc-400 text-sm font-medium leading-relaxed">
+                    <div className="text-zinc-400 text-sm font-medium leading-relaxed">
                       {error}
                       {error.includes("API_KEY") && (
                         <span className="block mt-4 p-4 glass rounded-lg text-left text-xs text-zinc-300 font-mono">
-                          Instruction: Login to your Vercel Dashboard, navigate to Project Settings -> Environment Variables, and add a key named 'API_KEY' with your Google Gemini token.
+                          Instruction: Login to your Vercel Dashboard, navigate to Project Settings &rarr; Environment Variables, and add a key named 'API_KEY' with your Google Gemini token.
                         </span>
                       )}
-                    </p>
+                    </div>
                   </div>
                   <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded hover:bg-zinc-200 transition-colors">Reboot Application</button>
                 </div>
