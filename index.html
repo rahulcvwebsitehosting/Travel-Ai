@@ -11,8 +11,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
-      // Browser Environment Shim: Ensure 'process' is available to avoid ReferenceErrors
-      window.process = window.process || { env: { NODE_ENV: 'production' } };
+      // Browser Environment Shim: Ensure 'process.env' is available
+      // This helps bridge the gap between build-time and run-time environment variables
+      window.process = window.process || { env: {} };
+      window.process.env = window.process.env || {};
+      window.process.env.NODE_ENV = window.process.env.NODE_ENV || 'production';
     </script>
     <style>
         :root {
@@ -37,7 +40,7 @@
             background-image: url('https://i.ibb.co/9H8BMVxk/unwatermarked-Gemini-Generated-Image-hzqpgqhzqpgqhzqp.png');
             background-size: cover;
             background-position: center;
-            opacity: 0.18; /* Slightly increased for better visibility of the custom art */
+            opacity: 0.18; 
             z-index: -2;
             filter: grayscale(100%) brightness(0.5) contrast(1.2);
             pointer-events: none;
@@ -183,7 +186,6 @@
     <div class="particles" id="particles"></div>
     <div id="root"></div>
     
-    <!-- Entry point for the application -->
     <script type="module" src="index.tsx"></script>
 
     <script>

@@ -38,10 +38,11 @@ const App: React.FC = () => {
   // Pre-flight check for API_KEY
   useEffect(() => {
     const checkEnv = () => {
-      // Look for the key in common injection points
-      const key = process.env?.API_KEY || (process.env as any)?.NEXT_PUBLIC_API_KEY || (window as any)?.API_KEY;
+      // Look for the key in process.env.API_KEY primarily
+      const key = (process.env as any)?.API_KEY;
+      
       if (!key) {
-        setError("MAINTENANCE_REQUIRED: Deployment Node Incomplete. Environmental variable 'API_KEY' is not detected in the current stack.");
+        setError("MAINTENANCE_REQUIRED: Environment variable 'API_KEY' not found in the current browser runtime.");
       }
     };
     checkEnv();
@@ -192,31 +193,45 @@ const App: React.FC = () => {
           
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Mission Control Offline</h1>
-            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-xs">Environment Node Error: 0xDEADBEEF</p>
+            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-xs">Security Status: Key Not Found</p>
           </div>
 
           <div className="max-w-xl w-full glass p-8 rounded-3xl border-white/10 space-y-6 text-left">
-            <p className="text-zinc-300 font-medium text-lg leading-relaxed">{error}</p>
+            <div className="flex items-center gap-3 text-red-500 mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M9.401 3.003c.115-.24.334-.403.599-.403h4c.265 0 .484.163.599.403l.4 1.2a.75.75 0 0 1-.712.987h-4.574a.75.75 0 0 1-.712-.987l.4-1.2ZM10 5.85a.75.75 0 0 0-.75.75v5.25c0 .414.336.75.75.75h4a.75.75 0 0 0 .75-.75V6.6a.75.75 0 0 0-.75-.75h-4Z" clipRule="evenodd" />
+                <path d="M4.438 10.53c.118-.129.285-.214.47-.23l1.32-.11a.75.75 0 0 1 .822.822l-.11 1.32a.75.75 0 0 1-1.28.47l-.822-.822a4.502 4.502 0 0 0-3.187 3.187l-.822.822a.75.75 0 0 1-1.28-.47l-.11-1.32a.75.75 0 0 1 .822-.822l1.32.11c.185.016.352.1.47.23L4.438 10.53Z" />
+              </svg>
+              <h3 className="text-xs font-black uppercase tracking-[0.3em]">Critical Failure: Env Var Detection</h3>
+            </div>
+            
+            <p className="text-zinc-300 font-medium text-sm leading-relaxed">
+              If you have already added <b>API_KEY</b> to your Vercel Project Settings, the current build does not yet have it "baked" into the code.
+            </p>
             
             <div className="pt-6 border-t border-white/5 space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Action Required: Vercel Recovery</h3>
-              <ul className="space-y-3 text-xs text-zinc-400 font-medium">
-                <li className="flex gap-3">
-                  <span className="text-red-500 font-black">1.</span>
-                  <span>Navigate to <b>Project Settings &rarr; Environment Variables</b>.</span>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">RECOVERY PROTOCOL:</h3>
+              <ol className="space-y-4 text-xs text-zinc-400 font-medium">
+                <li className="flex gap-4">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-white font-black text-[10px]">1</span>
+                  <span>Go to <b>Deployments</b> tab in Vercel.</span>
                 </li>
-                <li className="flex gap-3">
-                  <span className="text-red-500 font-black">2.</span>
-                  <span>Add Key: <code>API_KEY</code> with your Gemini token as the Value.</span>
+                <li className="flex gap-4">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-white font-black text-[10px]">2</span>
+                  <span>Click the <b>Three Dots (...)</b> next to the top deployment.</span>
                 </li>
-                <li className="flex gap-3">
-                  <span className="text-red-500 font-black">3.</span>
-                  <span>Go to <b>Deployments</b> and select <b>Redeploy</b> on the latest build.</span>
+                <li className="flex gap-4">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-white text-black font-black text-[10px]">3</span>
+                  <span>Select <b>Redeploy</b>. <i>(Required to inject the new key)</i></span>
                 </li>
-              </ul>
-              <div className="bg-black/40 p-4 rounded-xl border border-white/5 mt-4">
-                <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-2">Technical Note</p>
-                <p className="text-[10px] text-zinc-500 font-mono leading-relaxed italic">Environment variables are baked during the Build Phase. Re-deployment is mandatory after updating keys.</p>
+              </ol>
+              
+              <div className="bg-black/40 p-5 rounded-xl border border-white/5 mt-4">
+                <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-2">Technical Insight</p>
+                <p className="text-[10px] text-zinc-500 font-mono leading-relaxed italic">
+                  Browsers cannot see "Server-Side" variables unless they are processed at Build Time. 
+                  Refreshing the page will not solve this. A <b>Redeploy</b> is mandatory.
+                </p>
               </div>
             </div>
           </div>
@@ -225,7 +240,7 @@ const App: React.FC = () => {
             onClick={() => window.location.reload()} 
             className="px-12 py-5 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95 shadow-2xl"
           >
-            Recheck Connection Hub
+            Refresh System Link
           </button>
         </div>
       );
