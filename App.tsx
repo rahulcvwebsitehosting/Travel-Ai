@@ -38,9 +38,10 @@ const App: React.FC = () => {
   // Pre-flight check for API_KEY
   useEffect(() => {
     const checkEnv = () => {
-      const key = process.env.API_KEY || (process.env as any).NEXT_PUBLIC_API_KEY;
+      // Look for the key in common injection points
+      const key = process.env?.API_KEY || (process.env as any)?.NEXT_PUBLIC_API_KEY || (window as any)?.API_KEY;
       if (!key) {
-        setError("SYSTEM_MAINTENANCE: API node connection failed. Environmental variable 'API_KEY' is not detected. Please verify Vercel Dashboard settings.");
+        setError("MAINTENANCE_REQUIRED: Deployment Node Incomplete. Environmental variable 'API_KEY' is not detected in the current stack.");
       }
     };
     checkEnv();
@@ -91,14 +92,12 @@ const App: React.FC = () => {
         });
       }, 2000);
 
-      // Add a race against a timeout to prevent hanging UI
       const response = await Promise.race([
         searchHotels(activeQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Mission Timeout: The AI crew is taking longer than expected. Please check your network or API quota.")), 45000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("MISSION_TIMEOUT: The AI Crew is experiencing high latency. Verify API quota and network stability.")), 45000))
       ]) as any;
       
       clearInterval(stepTimer);
-
       setAgentLogs(prev => prev.map(l => ({ ...l, status: 'completed' })));
       
       const hotels = response.hotels || [];
@@ -117,7 +116,7 @@ const App: React.FC = () => {
       setAppState(AppState.RESULTS);
     } catch (err: any) {
       console.error("handleSearch Error:", err);
-      setError(err.message || "A deployment error occurred. The AI agents could not synchronize.");
+      setError(err.message || "DEPLOYMENT_FAULT: The AI Agents could not synchronize. Mission aborted.");
       setAppState(AppState.LANDING);
     } finally {
       setIsLoading(false);
@@ -179,25 +178,55 @@ const App: React.FC = () => {
       return <InfoView type={appState} onNavigate={onNavigate} />;
     }
 
-    if (error && error.includes("SYSTEM_MAINTENANCE")) {
+    if (error && error.includes("MAINTENANCE_REQUIRED")) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-700">
-          <div className="h-20 w-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mb-4 border border-red-500/20">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-10 h-10">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
+        <div className="flex flex-col items-center justify-center min-h-[65vh] text-center space-y-10 animate-in fade-in duration-700">
+          <div className="relative">
+            <div className="h-24 w-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center text-red-500 border border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.1)]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-12 h-12">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 rounded-full animate-ping opacity-20"></div>
           </div>
-          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Mission Control Offline</h1>
-          <div className="max-w-xl glass p-8 rounded-2xl border-white/10 text-zinc-400 space-y-4">
-            <p className="font-medium text-lg leading-relaxed">{error}</p>
-            <div className="pt-4 border-t border-white/5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">DevOps Instruction</p>
-              <div className="text-[10px] font-mono bg-black/40 p-4 rounded text-left">
-                Ensure "API_KEY" or "NEXT_PUBLIC_API_KEY" is added to your Vercel project environment variables. If you just added it, trigger a fresh deployment.
+          
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Mission Control Offline</h1>
+            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-xs">Environment Node Error: 0xDEADBEEF</p>
+          </div>
+
+          <div className="max-w-xl w-full glass p-8 rounded-3xl border-white/10 space-y-6 text-left">
+            <p className="text-zinc-300 font-medium text-lg leading-relaxed">{error}</p>
+            
+            <div className="pt-6 border-t border-white/5 space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Action Required: Vercel Recovery</h3>
+              <ul className="space-y-3 text-xs text-zinc-400 font-medium">
+                <li className="flex gap-3">
+                  <span className="text-red-500 font-black">1.</span>
+                  <span>Navigate to <b>Project Settings &rarr; Environment Variables</b>.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-red-500 font-black">2.</span>
+                  <span>Add Key: <code>API_KEY</code> with your Gemini token as the Value.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-red-500 font-black">3.</span>
+                  <span>Go to <b>Deployments</b> and select <b>Redeploy</b> on the latest build.</span>
+                </li>
+              </ul>
+              <div className="bg-black/40 p-4 rounded-xl border border-white/5 mt-4">
+                <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-2">Technical Note</p>
+                <p className="text-[10px] text-zinc-500 font-mono leading-relaxed italic">Environment variables are baked during the Build Phase. Re-deployment is mandatory after updating keys.</p>
               </div>
             </div>
           </div>
-          <button onClick={() => window.location.reload()} className="px-8 py-4 bg-white text-black text-xs font-black uppercase tracking-widest rounded hover:bg-zinc-200 transition-all">Reboot Hub</button>
+
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-12 py-5 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95 shadow-2xl"
+          >
+            Recheck Connection Hub
+          </button>
         </div>
       );
     }
@@ -220,7 +249,7 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            {error && !error.includes("MAINTENANCE") && (
+            {error && (
               <div className="w-full max-w-2xl bg-red-500/5 border border-red-500/20 p-6 rounded-2xl text-red-400 animate-in shake duration-500 flex items-center justify-between gap-4">
                 <p className="text-xs font-black uppercase tracking-widest text-left">{error}</p>
                 <button onClick={() => setError(null)} className="shrink-0 hover:text-white transition-colors">

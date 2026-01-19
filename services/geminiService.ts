@@ -63,17 +63,13 @@ const HOTEL_SCHEMA = {
 
 /**
  * Validates environment and initializes the Google GenAI client.
- * Uses process.env.API_KEY exclusively as required.
+ * Strictly uses process.env.API_KEY as per core requirements.
  */
 function getAI() {
-  // Check both process.env and common fallback patterns for Vite/Vercel client-side availability
-  // while strictly using the name API_KEY as per system instructions.
-  const apiKey = (typeof process !== 'undefined' && process.env) 
-    ? (process.env.API_KEY || (process.env as any).NEXT_PUBLIC_API_KEY) 
-    : undefined;
+  const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
-    throw new Error("CRITICAL_CONFIG_ERROR: The 'API_KEY' environment variable is missing or inaccessible in the current environment node.");
+    throw new Error("MAINTENANCE_REQUIRED: Environment variable 'API_KEY' is missing. Please add it to your Vercel Project Settings.");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -87,7 +83,7 @@ export async function searchHotels(userInput: string) {
 
       STRICT URL & DATA QUALITY PROTOCOLS:
       1. GROUNDING: Use Google Search to find REAL properties, LIVE prices, and working URLs.
-      2. URL DEEP-LINKING: For 'comparisons', the 'url' MUST NOT be a generic homepage. It must be a specific URL that leads the user directly to this hotel's details on that platform.
+      2. URL DEEP-LINKING: For 'comparisons', the 'url' MUST NOT be a generic homepage.
       3. RECOVERY: If a direct deep link is unavailable, construct a platform search URL.
       4. IMAGE DIVERSITY: Each hotel must have a unique, high-quality image URL.
       5. INDIAN CONTEXT: Focus on Indian users—prioritize MakeMyTrip prices where possible.
