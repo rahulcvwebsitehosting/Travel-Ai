@@ -12,27 +12,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
       /**
-       * System Synchronization Shim
-       * Detects and maps API_KEY from multiple potential host injection points.
+       * TC_CORE_SYNC
+       * This shim ensures the Gemini SDK can find the API_KEY regardless of how the host 
+       * environment (Vercel/Vite/Next) attempts to hide or prefix it.
        */
       (function() {
         window.process = window.process || { env: {} };
         window.process.env = window.process.env || {};
         
-        const KEY_CANDIDATES = [
-          window.API_KEY,
-          window.process.env.API_KEY,
-          window.process.env.NEXT_PUBLIC_API_KEY,
-          window.process.env.VITE_API_KEY,
-          window.ENV?.API_KEY
-        ];
+        // Use a function to search for the key across common environment namespaces
+        const findKey = () => {
+          return window.API_KEY || 
+                 window.process.env.API_KEY || 
+                 window.process.env.NEXT_PUBLIC_API_KEY || 
+                 window.process.env.VITE_API_KEY || 
+                 window.ENV?.API_KEY;
+        };
 
-        const validKey = KEY_CANDIDATES.find(k => k && k !== "undefined" && typeof k === 'string');
-        if (validKey) {
-          window.process.env.API_KEY = validKey;
-          console.log("TC_SYSTEM: Core Node Synchronized.");
-        } else {
-          console.warn("TC_SYSTEM: Waiting for Environment Sync...");
+        const key = findKey();
+        if (key && key !== 'undefined') {
+          window.process.env.API_KEY = key;
+          console.log("TC_SYSTEM: Environment Node Synchronized Successfully.");
         }
         
         window.process.env.NODE_ENV = window.process.env.NODE_ENV || 'production';

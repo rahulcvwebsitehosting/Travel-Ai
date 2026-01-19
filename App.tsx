@@ -55,10 +55,10 @@ const App: React.FC = () => {
     const activeQuery = customQuery || query;
     if (!activeQuery.trim()) return;
 
-    // Check for key at runtime
-    const key = (process.env as any)?.API_KEY;
-    if (!key || key === "undefined") {
-      setError("MAINTENANCE_REQUIRED: Deployment Node Incomplete. Environmental variable 'API_KEY' is not detected in the current stack. Ensure you have added the key to Vercel and performed a REDEPLOY.");
+    // Direct dynamic key lookup to avoid bundler static replacement
+    const key = (window as any).process?.env?.API_KEY;
+    if (!key || key === 'undefined') {
+      setError("MISSION_FAILURE: API_KEY synchronization failed. Please ensure the 'API_KEY' environment variable is set in Vercel and you have performed a 'Redeploy'.");
       return;
     }
 
@@ -89,7 +89,7 @@ const App: React.FC = () => {
 
       const response = await Promise.race([
         searchHotels(activeQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("MISSION_TIMEOUT: The AI Crew is experiencing high latency. Verify API quota and network stability.")), 45000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("MISSION_TIMEOUT: High latency in Agent Network.")), 45000))
       ]) as any;
       
       clearInterval(stepTimer);
@@ -104,14 +104,14 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Crew mission success. Analyzed ${response.sources?.length || 0} datasets. Recommendations for ${locationName} mapped to your intent.`,
+        content: `Crew mission success. Recommendations for ${locationName} are ready for review.`,
         timestamp: new Date().toLocaleTimeString()
       }]);
 
       setAppState(AppState.RESULTS);
     } catch (err: any) {
       console.error("handleSearch Error:", err);
-      setError(err.message || "DEPLOYMENT_FAULT: The AI Agents could not synchronize. Mission aborted.");
+      setError(err.message || "DEPLOYMENT_FAULT: Agent Synchronization Error.");
       setAppState(AppState.LANDING);
     } finally {
       setIsLoading(false);
@@ -135,7 +135,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response || "The crew is verifying details...",
+        content: response || "System link active, waiting for agent data...",
         timestamp: new Date().toLocaleTimeString()
       }]);
     } catch (err) {
@@ -155,7 +155,7 @@ const App: React.FC = () => {
     if (hotel.bookingUrl) {
       window.open(hotel.bookingUrl, '_blank');
     } else {
-      alert("Booking link unavailable for this property.");
+      alert("Booking link unavailable.");
     }
   };
 
@@ -186,37 +186,22 @@ const App: React.FC = () => {
                 <span className="text-gradient">Perfect Stay</span>
               </h1>
               <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto font-medium leading-relaxed">
-                A monochrome, high-performance interface for deploying AI agents across the travel stack. 
+                High-performance interface for deploying AI agents across the travel stack. 
                 <span className="block text-zinc-500 mt-2 text-lg">Tell us your intent. Our AI crew handles the research.</span>
               </p>
             </div>
 
             {error && (
-              <div className={`w-full max-w-2xl border p-6 rounded-2xl animate-in shake duration-500 flex flex-col items-center gap-4 ${
-                error.includes("MAINTENANCE_REQUIRED") 
-                ? "bg-red-500/10 border-red-500/40 text-red-400" 
-                : "bg-red-500/5 border-red-500/20 text-red-400"
-              }`}>
+              <div className="w-full max-w-2xl bg-red-500/10 border border-red-500/20 p-6 rounded-2xl text-red-400 animate-in shake duration-500 flex flex-col items-start gap-4">
                 <div className="flex items-center justify-between w-full">
-                  <p className="text-xs font-black uppercase tracking-widest text-left">{error.includes("MAINTENANCE_REQUIRED") ? "Mission Control Offline" : error}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">Protocol Failure</p>
                   <button onClick={() => setError(null)} className="shrink-0 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                
-                {error.includes("MAINTENANCE_REQUIRED") && (
-                  <div className="text-left w-full space-y-4 pt-4 border-t border-red-500/10">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Recovery Protocol:</p>
-                    <ol className="text-[10px] font-bold space-y-1 opacity-70">
-                      <li>1. Navigate to Project Settings → Environment Variables.</li>
-                      <li>2. Add Key: <span className="text-white">API_KEY</span> with your Gemini token.</li>
-                      <li>3. Go to Deployments and select <span className="text-white">Redeploy</span>.</li>
-                    </ol>
-                    <p className="text-[9px] italic opacity-60">Re-deployment is mandatory to bundle variables into the client stack.</p>
-                  </div>
-                )}
+                <p className="text-xs font-medium leading-relaxed">{error}</p>
               </div>
             )}
 
@@ -237,11 +222,6 @@ const App: React.FC = () => {
                   className="px-12 py-6 text-sm"
                 >
                   <span>{isLoading ? 'Processing...' : 'Deploy Crew'}</span>
-                  {!isLoading && (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  )}
                 </AgenticButton>
               </div>
             </div>
@@ -259,11 +239,6 @@ const App: React.FC = () => {
                   <div className="flex flex-col gap-1">
                     <span className="font-bold text-zinc-300 group-hover:text-white transition-colors">{item.label}</span>
                     <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">{item.budget}</span>
-                  </div>
-                  <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:text-black transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
                   </div>
                 </motion.button>
               ))}
@@ -291,15 +266,7 @@ const App: React.FC = () => {
               <p className="text-zinc-400 font-medium max-w-md mx-auto px-8">
                 Estimated Mission Time: <span className="text-white font-black">{ESTIMATED_DEPLOY_TIME}s</span>
               </p>
-              <div className="w-64 h-1 bg-white/5 rounded-full mx-auto overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((missionTimer / ESTIMATED_DEPLOY_TIME) * 100, 100)}%` }}
-                  className="h-full bg-white"
-                />
-              </div>
             </div>
-            <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Researching real-time market data across 50+ indices...</p>
             <AgentStatusPanel logs={agentLogs} />
           </div>
         );
@@ -311,83 +278,19 @@ const App: React.FC = () => {
                 <motion.button 
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
                   onClick={() => onNavigate(AppState.LANDING)} 
-                  className="flex items-center gap-2 text-zinc-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all mb-2 px-6 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg"
+                  className="flex items-center gap-2 text-zinc-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all mb-2 px-6 py-2 bg-white/5 border border-white/10 rounded-lg"
                 >
                   Terminate Mission
                 </motion.button>
                 <h2 className="text-3xl font-black text-white">Active Intelligence Mission</h2>
               </div>
-              <div className="flex items-center gap-4 glass px-6 py-3 rounded-xl border-white/10">
-                <div className="flex -space-x-3">{[1,2,3,4,5].map(i => <div key={i} className="h-10 w-10 rounded-lg bg-zinc-700 border-2 border-black flex items-center justify-center text-[10px] font-black text-white shadow-xl">A{i}</div>)}</div>
-                <div className="h-2 w-2 rounded-full bg-white animate-pulse"></div>
-                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Operational</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-6 max-h-[400px] overflow-y-auto pr-4 scrollbar-hide custom-scrollbar">
-              {messages.map(msg => (
-                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-4`}>
-                  <div className={`max-w-[75%] p-6 rounded-2xl shadow-2xl ${msg.role === 'user' ? 'bg-zinc-800 text-white' : 'glass border-white/10 text-zinc-200'}`}>
-                    <p className="text-md leading-relaxed font-medium whitespace-pre-wrap">{msg.content}</p>
-                    <span className={`text-[9px] font-black uppercase tracking-widest mt-4 block opacity-40 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>{msg.timestamp}</span>
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
             </div>
 
             <div className="space-y-20">
-              <div className="text-center space-y-4">
-                <h3 className="text-5xl font-black text-white tracking-tighter uppercase">Mission Results</h3>
-                <p className="text-zinc-400 text-lg font-medium max-w-xl mx-auto">Research compiled and validated. Here are the top matches that align with your requirements.</p>
-              </div>
-              
-              {groundingSources.length > 0 && (
-                <div className="max-w-4xl mx-auto p-6 glass border-white/10 rounded-2xl">
-                  <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] mb-4">Verification Intelligence</h4>
-                  <div className="flex flex-wrap gap-4">
-                    {groundingSources.map((source, idx) => (
-                      <a 
-                        key={idx} 
-                        href={source.uri} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs text-zinc-300 hover:text-white transition-colors flex items-center gap-2 group"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                        </svg>
-                        <span className="border-b border-white/10 group-hover:border-white transition-all">{source.title}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="grid grid-cols-1 gap-12">
                 {results.map((hotel) => (
                   <HotelCard key={hotel.id} hotel={hotel} onBook={handleBook} />
                 ))}
-              </div>
-              
-              <div className="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/10 p-6 z-50 shadow-[0_-20px_50px_rgba(0,0,0,1)]">
-                <div className="max-w-7xl mx-auto flex gap-4">
-                  <input 
-                    type="text" 
-                    value={chatInput} 
-                    onChange={(e) => setChatInput(e.target.value)} 
-                    onKeyDown={(e) => e.key === 'Enter' && handleChat()} 
-                    placeholder="Refine Parameters or Ask Questions..." 
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-8 py-5 outline-none focus:ring-1 focus:ring-white/30 transition-all text-white font-medium placeholder:text-zinc-600" 
-                  />
-                  <AgenticButton 
-                    onClick={handleChat} 
-                    disabled={isLoading} 
-                    className="px-12 py-5 text-xs"
-                  >
-                    Process Command
-                  </AgenticButton>
-                </div>
               </div>
             </div>
           </div>
@@ -396,7 +299,6 @@ const App: React.FC = () => {
         return (
           <div className="max-w-4xl mx-auto py-12 text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 glass rounded-2xl border-white/10">
             <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">{appState.replace('_', ' ')}</h1>
-            <p className="text-xl text-zinc-400 leading-relaxed font-medium">Node details incoming... Deploying framework components.</p>
             <AgenticButton onClick={() => onNavigate(AppState.LANDING)}>Return to Hub</AgenticButton>
           </div>
         );

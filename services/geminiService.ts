@@ -13,19 +13,13 @@ const HOTEL_SCHEMA = {
           id: { type: Type.STRING },
           name: { type: Type.STRING },
           rating: { type: Type.NUMBER },
-          location: { type: Type.STRING, description: "Detailed neighborhood and city. NO PLACEHOLDERS." },
-          pricePerNight: { type: Type.NUMBER, description: "Current market rate in INR. MUST be > 0." },
-          totalPrice: { type: Type.NUMBER, description: "Total for the duration. MUST be > 0." },
-          image: { 
-            type: Type.STRING, 
-            description: "A UNIQUE, DIRECT, high-resolution URL to a real photo. Use actual deep links found in search. Every hotel MUST have a different image." 
-          },
-          bookingUrl: { 
-            type: Type.STRING, 
-            description: "The official website link for the hotel property." 
-          },
-          description: { type: Type.STRING, description: "Engaging 2-sentence summary." },
-          whyPerfect: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3 reasons why this matches Indian preferences." },
+          location: { type: Type.STRING, description: "Detailed neighborhood and city." },
+          pricePerNight: { type: Type.NUMBER },
+          totalPrice: { type: Type.NUMBER },
+          image: { type: Type.STRING },
+          bookingUrl: { type: Type.STRING },
+          description: { type: Type.STRING },
+          whyPerfect: { type: Type.ARRAY, items: { type: Type.STRING } },
           aiAnalysis: {
             type: Type.OBJECT,
             properties: {
@@ -40,9 +34,9 @@ const HOTEL_SCHEMA = {
             items: {
               type: Type.OBJECT,
               properties: {
-                platform: { type: Type.STRING, description: "e.g., 'MakeMyTrip', 'Booking.com', 'Agoda'." },
+                platform: { type: Type.STRING },
                 price: { type: Type.NUMBER },
-                url: { type: Type.STRING, description: "The DEEP LINK to the specific hotel listing. If a direct deep link is not found, provide a platform-specific search URL for this hotel name. DO NOT provide generic homepages like 'booking.com'." },
+                url: { type: Type.STRING },
                 isBest: { type: Type.BOOLEAN }
               },
               required: ["platform", "price", "url"]
@@ -62,14 +56,15 @@ const HOTEL_SCHEMA = {
 };
 
 /**
- * Initializes the AI SDK.
- * Exclusively uses process.env.API_KEY as the intelligence source.
+ * Robust AI Initialization
+ * Accesses API_KEY dynamically from the process shim to ensure runtime availability.
  */
 function getAIInstance() {
-  const apiKey = (process.env as any)?.API_KEY;
+  // Use bracket notation to prevent bundler static analysis/replacement
+  const apiKey = (window as any).process?.env?.API_KEY || (process.env as any)?.API_KEY;
 
-  if (!apiKey) {
-    throw new Error("API_KEY_NODE_UNAVAILABLE");
+  if (!apiKey || apiKey === 'undefined') {
+    throw new Error("MISSION_NODE_UNAVAILABLE");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -79,16 +74,9 @@ export async function searchHotels(userInput: string) {
   try {
     const ai = getAIInstance();
     const prompt = `
-      OPERATIONAL COMMAND: Deploy TravelCrew AI Agents to research and extract booking data for: "${userInput}".
-
-      STRICT URL & DATA QUALITY PROTOCOLS:
-      1. GROUNDING: Use Google Search to find REAL properties, LIVE prices, and working URLs.
-      2. URL DEEP-LINKING: For 'comparisons', the 'url' MUST NOT be a generic homepage.
-      3. RECOVERY: If a direct deep link is unavailable, construct a platform search URL.
-      4. IMAGE DIVERSITY: Each hotel must have a unique, high-quality image URL.
-      5. INDIAN CONTEXT: Focus on Indian users—prioritize MakeMyTrip prices where possible.
-
-      MISSION: Return 3 highly-vetted options (Best, Value, Premium) as JSON.
+      OPERATIONAL COMMAND: Deploy TravelCrew AI Agents for: "${userInput}".
+      STRICT URL PROTOCOLS: Use Google Search to find REAL property deep links.
+      MISSION: Return 3 vetted options (Best, Value, Premium) as JSON.
     `;
 
     const response = await ai.models.generateContent({
@@ -115,8 +103,8 @@ export async function searchHotels(userInput: string) {
     return { ...json, sources };
   } catch (error: any) {
     console.error("AI Service Error:", error);
-    if (error.message === "API_KEY_NODE_UNAVAILABLE") {
-      throw new Error("MAINTENANCE_REQUIRED: Environment variable 'API_KEY' is missing from the build stack.");
+    if (error.message === "MISSION_NODE_UNAVAILABLE") {
+      throw new Error("MAINTENANCE_REQUIRED: Environmental synchronization failed. Ensure API_KEY is set in Vercel.");
     }
     throw error;
   }
@@ -127,10 +115,8 @@ export async function chatWithCrew(userInput: string, context: Hotel[]) {
     const ai = getAIInstance();
     const prompt = `
       You are the TravelCrew AI Hub. 
-      Research results: ${JSON.stringify(context)}
-      User Query: "${userInput}"
-      
-      Assist the user based on the researched data. If URLs are requested, explain which platform offers the best value.
+      Context: ${JSON.stringify(context)}
+      Query: "${userInput}"
     `;
 
     const response = await ai.models.generateContent({
@@ -140,6 +126,6 @@ export async function chatWithCrew(userInput: string, context: Hotel[]) {
     return response.text;
   } catch (error) {
     console.error("Chat Error:", error);
-    return "The communication link is experiencing high latency. Please retry the command.";
+    return "The communication link is experiencing high latency.";
   }
 }
