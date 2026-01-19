@@ -55,10 +55,10 @@ const App: React.FC = () => {
     const activeQuery = customQuery || query;
     if (!activeQuery.trim()) return;
 
-    // Pre-deployment verification
+    // Check for key at runtime
     const key = (process.env as any)?.API_KEY;
-    if (!key) {
-      setError("MAINTENANCE_REQUIRED: Deployment Node Incomplete. Environmental variable 'API_KEY' is not detected. Ensure you have added the key to Vercel and performed a REDEPLOY.");
+    if (!key || key === "undefined") {
+      setError("MAINTENANCE_REQUIRED: Deployment Node Incomplete. Environmental variable 'API_KEY' is not detected in the current stack. Ensure you have added the key to Vercel and performed a REDEPLOY.");
       return;
     }
 
@@ -173,72 +173,6 @@ const App: React.FC = () => {
       return <InfoView type={appState} onNavigate={onNavigate} />;
     }
 
-    if (error && error.includes("MAINTENANCE_REQUIRED")) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[65vh] text-center space-y-10 animate-in fade-in duration-700">
-          <div className="relative">
-            <div className="h-24 w-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center text-red-500 border border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.1)]">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-12 h-12">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-            </div>
-            <div className="absolute -top-2 -right-2 h-6 w-6 bg-red-500 rounded-full animate-ping opacity-20"></div>
-          </div>
-          
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Mission Control Offline</h1>
-            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-xs">Security Status: Key Not Synchronized</p>
-          </div>
-
-          <div className="max-w-xl w-full glass p-8 rounded-3xl border-white/10 space-y-6 text-left">
-            <div className="flex items-center gap-3 text-red-500 mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path fillRule="evenodd" d="M9.401 3.003c.115-.24.334-.403.599-.403h4c.265 0 .484.163.599.403l.4 1.2a.75.75 0 0 1-.712.987h-4.574a.75.75 0 0 1-.712-.987l.4-1.2ZM10 5.85a.75.75 0 0 0-.75.75v5.25c0 .414.336.75.75.75h4a.75.75 0 0 0 .75-.75V6.6a.75.75 0 0 0-.75-.75h-4Z" clipRule="evenodd" />
-                <path d="M4.438 10.53c.118-.129.285-.214.47-.23l1.32-.11a.75.75 0 0 1 .822.822l-.11 1.32a.75.75 0 0 1-1.28.47l-.822-.822a4.502 4.502 0 0 0-3.187 3.187l-.822.822a.75.75 0 0 1-1.28-.47l-.11-1.32a.75.75 0 0 1 .822-.822l1.32.11c.185.016.352.1.47.23L4.438 10.53Z" />
-              </svg>
-              <h3 className="text-xs font-black uppercase tracking-[0.3em]">RECOVERY PROTOCOL REQUIRED</h3>
-            </div>
-            
-            <p className="text-zinc-300 font-medium text-sm leading-relaxed">
-              You added the API Key, but Vercel needs to build a new version of the app to "inject" that key into the browser code.
-            </p>
-            
-            <div className="pt-6 border-t border-white/5 space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white underline underline-offset-4 decoration-red-500">CRITICAL NEXT STEPS:</h3>
-              <ol className="space-y-4 text-xs text-zinc-400 font-medium">
-                <li className="flex gap-4">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-white font-black text-[10px]">1</span>
-                  <span>Go to the <b>Deployments</b> tab in your Vercel project.</span>
-                </li>
-                <li className="flex gap-4">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-white font-black text-[10px]">2</span>
-                  <span>Click the <b>Three Dots (...)</b> next to the latest deployment.</span>
-                </li>
-                <li className="flex gap-4">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-white text-black font-black text-[10px]">3</span>
-                  <span>Select <b>Redeploy</b>. This is the only way to activate the key.</span>
-                </li>
-              </ol>
-              
-              <div className="bg-black/40 p-5 rounded-xl border border-white/5 mt-4">
-                <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-2">Technical Insight</p>
-                <p className="text-[10px] text-zinc-500 font-mono leading-relaxed italic">
-                  Frontend code cannot "see" Vercel secrets in real-time. They must be bundled into the code during the <b>Build Phase</b>.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-12 py-5 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95 shadow-2xl"
-          >
-            Re-Synchronize System Hub
-          </button>
-        </div>
-      );
-    }
-
     switch (appState) {
       case AppState.LANDING:
         return (
@@ -258,13 +192,31 @@ const App: React.FC = () => {
             </div>
 
             {error && (
-              <div className="w-full max-w-2xl bg-red-500/5 border border-red-500/20 p-6 rounded-2xl text-red-400 animate-in shake duration-500 flex items-center justify-between gap-4">
-                <p className="text-xs font-black uppercase tracking-widest text-left">{error}</p>
-                <button onClick={() => setError(null)} className="shrink-0 hover:text-white transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <div className={`w-full max-w-2xl border p-6 rounded-2xl animate-in shake duration-500 flex flex-col items-center gap-4 ${
+                error.includes("MAINTENANCE_REQUIRED") 
+                ? "bg-red-500/10 border-red-500/40 text-red-400" 
+                : "bg-red-500/5 border-red-500/20 text-red-400"
+              }`}>
+                <div className="flex items-center justify-between w-full">
+                  <p className="text-xs font-black uppercase tracking-widest text-left">{error.includes("MAINTENANCE_REQUIRED") ? "Mission Control Offline" : error}</p>
+                  <button onClick={() => setError(null)} className="shrink-0 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {error.includes("MAINTENANCE_REQUIRED") && (
+                  <div className="text-left w-full space-y-4 pt-4 border-t border-red-500/10">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Recovery Protocol:</p>
+                    <ol className="text-[10px] font-bold space-y-1 opacity-70">
+                      <li>1. Navigate to Project Settings → Environment Variables.</li>
+                      <li>2. Add Key: <span className="text-white">API_KEY</span> with your Gemini token.</li>
+                      <li>3. Go to Deployments and select <span className="text-white">Redeploy</span>.</li>
+                    </ol>
+                    <p className="text-[9px] italic opacity-60">Re-deployment is mandatory to bundle variables into the client stack.</p>
+                  </div>
+                )}
               </div>
             )}
 

@@ -12,24 +12,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
       /**
-       * Hub Connection Shim
-       * Ensures that 'process.env.API_KEY' is accessible to the Gemini SDK
-       * by checking multiple standard injection points used by Vercel and modern bundlers.
+       * System Synchronization Shim
+       * Detects and maps API_KEY from multiple potential host injection points.
        */
-      window.process = window.process || { env: {} };
-      window.process.env = window.process.env || {};
-      
-      // Attempt to capture the API_KEY from global scope or standard framework prefixes
-      const capturedKey = window.API_KEY || 
-                          (window.process && window.process.env && window.process.env.API_KEY) || 
-                          (window.process && window.process.env && window.process.env.NEXT_PUBLIC_API_KEY) ||
-                          (window.process && window.process.env && window.process.env.VITE_API_KEY);
-      
-      if (capturedKey) {
-        window.process.env.API_KEY = capturedKey;
-      }
-      
-      window.process.env.NODE_ENV = window.process.env.NODE_ENV || 'production';
+      (function() {
+        window.process = window.process || { env: {} };
+        window.process.env = window.process.env || {};
+        
+        const KEY_CANDIDATES = [
+          window.API_KEY,
+          window.process.env.API_KEY,
+          window.process.env.NEXT_PUBLIC_API_KEY,
+          window.process.env.VITE_API_KEY,
+          window.ENV?.API_KEY
+        ];
+
+        const validKey = KEY_CANDIDATES.find(k => k && k !== "undefined" && typeof k === 'string');
+        if (validKey) {
+          window.process.env.API_KEY = validKey;
+          console.log("TC_SYSTEM: Core Node Synchronized.");
+        } else {
+          console.warn("TC_SYSTEM: Waiting for Environment Sync...");
+        }
+        
+        window.process.env.NODE_ENV = window.process.env.NODE_ENV || 'production';
+      })();
     </script>
     <style>
         :root {
