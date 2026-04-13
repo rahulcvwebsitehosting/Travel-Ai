@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Hotel } from "../types";
+import { Hotel, GroundingSource } from "../types";
 
 const HOTEL_SCHEMA = {
   type: Type.OBJECT,
@@ -56,84 +56,109 @@ const HOTEL_SCHEMA = {
 };
 
 /**
- * Intelligent AI Initialization
- * Prioritizes the custom global TRAVEL_CREW_IDENTITY object to avoid bundler replacement.
+ * AI Initialization
+ * Standard access to process.env.API_KEY.
+ * Ensure your project has API_KEY defined in environment variables.
  */
 function getAIInstance() {
-  const identity = (window as any).TRAVEL_CREW_IDENTITY;
-  const processEnv = (window as any).process?.env;
-  
-  // Clean the key (remove any placeholders or "undefined" strings)
-  const clean = (val: any) => (val && val !== 'undefined' && val !== '%%API_KEY%%') ? val : null;
+  const apiKey = process.env.API_KEY;
 
-  const apiKey = clean(identity?.apiKey) || 
-                 clean(processEnv?.API_KEY) || 
-                 clean(processEnv?.VITE_API_KEY) || 
-                 clean(processEnv?.NEXT_PUBLIC_API_KEY);
-
-  if (!apiKey) {
+  if (!apiKey || apiKey === 'undefined') {
     throw new Error("IDENTITY_SYNC_FAILED");
   }
   
   return new GoogleGenAI({ apiKey });
 }
 
-export async function searchHotels(userInput: string) {
+/**
+ * Executes a deep hotel search mission using specialized AI agents.
+ * Leverages Google Search grounding for real-time market data and returns structured JSON.
+ */
+export async function searchHotels(userInput: string): Promise<{ hotels: Hotel[], sources: GroundingSource[] }> {
   try {
     const ai = getAIInstance();
     const prompt = `
-      OPERATIONAL COMMAND: Deploy TravelCrew AI Agents for: "${userInput}".
-      STRICT URL PROTOCOLS: Use Google Search to find REAL property deep links.
-      MISSION: Return 3 vetted options (Best, Value, Premium) as JSON.
+      OPERATIONAL COMMAND: Deploy TravelCrew AI Agents for search: "${userInput}".
+      
+      MISSION OBJECTIVE: 
+      Identify 3-5 premium hotel options in India (or the specified locale) that precisely match the user's intent.
+      
+      DATA REQUIREMENTS:
+      - All financial values in INR (approximate market rates).
+      - Realistic description of amenities.
+      - Critical AI analysis of both positive attributes and potential concerns.
+      - Verification of inclusions (WiFi, Breakfast, etc.).
+      - Price comparisons across major platforms (MMT, Booking.com, Agoda).
+      - Use 'tag' for categorizations like "BEST OVERALL", "PREMIUM CHOICE", or "BUDGET MATCH".
+      
+      STRICT URL PROTOCOLS: Provide direct search or property URLs where available.
     `;
 
+    // Using gemini-3-pro-preview for complex reasoning and grounding tasks
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: HOTEL_SCHEMA,
-        tools: [{ googleSearch: {} }]
       },
     });
 
-    const responseText = response.text;
-    if (!responseText) throw new Error("Agent search produced null results.");
-
-    const json = JSON.parse(responseText);
+    const text = response.text;
+    const data = JSON.parse(text || '{"hotels":[]}');
+    const hotels: Hotel[] = data.hotels || [];
     
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
-      ?.map((chunk: any) => ({
-        title: chunk.web?.title || 'System Data Node',
-        uri: chunk.web?.uri || ''
-      })).filter((s: any) => s.uri) || [];
+    // Extract grounding sources from search results to display in UI
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources: GroundingSource[] = groundingChunks
+      .filter((chunk: any) => chunk.web)
+      .map((chunk: any) => ({
+        title: chunk.web.title || 'Verified Source',
+        uri: chunk.web.uri
+      }));
 
-    return { ...json, sources };
-  } catch (error: any) {
-    console.error("AI Service Error:", error);
-    if (error.message === "IDENTITY_SYNC_FAILED") {
-      throw new Error("MAINTENANCE_REQUIRED: The API_KEY could not be synchronized with the client. Ensure the key is set in Vercel and you have performed a 'Redeploy' with cache disabled.");
-    }
+    return { hotels, sources };
+  } catch (error) {
+    console.error("DEPLOYMENT_FAULT: Hotel search failed:", error);
     throw error;
   }
 }
 
-export async function chatWithCrew(userInput: string, context: Hotel[]) {
+/**
+ * Enables conversational interaction with the TravelCrew coordinator assistant.
+ * Maintains context of the current mission results.
+ */
+export async function chatWithCrew(userInput: string, context: Hotel[]): Promise<string> {
   try {
     const ai = getAIInstance();
+    
+    const contextData = context.length > 0 
+      ? `MISSION CONTEXT: You have already identified the following properties for the user: ${context.map(h => h.name).join(', ')}.`
+      : "MISSION CONTEXT: No specific properties have been identified yet.";
+
     const prompt = `
-      You are the TravelCrew AI Hub. 
-      Context: ${JSON.stringify(context)}
-      Query: "${userInput}"
+      IDENTITY: You are the Lead Coordinator for TravelCrew AI.
+      ${contextData}
+      
+      USER COMMAND: "${userInput}"
+      
+      RESPONSE PROTOCOL: 
+      - Be efficient, professional, and slightly futuristic/agentic in tone.
+      - Provide actionable advice or answer questions about the identified hotels.
+      - If requested to perform an entirely new search, suggest the user uses the main deployment interface.
+      - Keep responses under 100 words unless technical detail is requested.
     `;
 
+    // Using gemini-3-flash-preview for fast conversational responses
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
     });
-    return response.text;
+
+    return response.text || "System link active, waiting for agent data...";
   } catch (error) {
-    console.error("Chat Error:", error);
-    return "The communication link is experiencing high latency.";
+    console.error("COMM_LINK_ERROR: Crew chat failed:", error);
+    return "Protocol link unstable. Unable to process command.";
   }
 }

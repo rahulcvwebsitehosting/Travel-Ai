@@ -10,32 +10,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script>
-      /**
-       * TRAVEL_CREW_IDENTITY_SYNC
-       * We use a custom global object to store the API Key. 
-       * This prevents build tools (like Vite/Webpack) from finding and replacing 
-       * "process.env.API_KEY" with "undefined" during the compilation phase.
-       */
-      window.TRAVEL_CREW_IDENTITY = {
-        // Attempt to capture from all possible Vercel/Framework injection points
-        apiKey: "%%API_KEY%%" || 
-                (typeof process !== 'undefined' ? process.env.API_KEY : null) || 
-                (typeof process !== 'undefined' ? process.env.VITE_API_KEY : null) ||
-                (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_KEY : null)
-      };
-
-      // Fallback: If the bundler didn't replace the string above, 
-      // we check the standard global process node if it exists.
-      window.process = window.process || { env: {} };
-      window.process.env = window.process.env || {};
-      
-      // Ensure the SDK can find it if it looks in the standard place
-      if (window.TRAVEL_CREW_IDENTITY.apiKey && window.TRAVEL_CREW_IDENTITY.apiKey !== "%%API_KEY%%") {
-        window.process.env.API_KEY = window.TRAVEL_CREW_IDENTITY.apiKey;
-        console.log("TC_SYSTEM: Identity Node Synchronized.");
-      }
-    </script>
     <style>
         :root {
             --bg-primary: #000000;
@@ -148,11 +122,13 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div class="bg-city-overlay"></div>
     <div class="bg-vignette"></div>
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
